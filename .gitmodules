@@ -1,0 +1,3 @@
+[submodule "gpiodroid/src/main/cpp/libgpiod"]
+	path = gpiodroid/src/main/cpp/libgpiod
+	url = https://soimy@github.com/soimy/libgpiod-android.git
