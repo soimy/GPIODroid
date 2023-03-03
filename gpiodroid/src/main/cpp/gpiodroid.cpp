@@ -1,41 +1,39 @@
 #include <jni.h>
 #include <string>
-#include <gpiod.h>
+#include <cstdlib>
+#include <filesystem>
+#include <gpiod.hpp>
 #include <android/log.h>
-#include <tools-common.h>
+#include "Logger.hpp"
 
 #define LOG_TAG "GPIODroid_native"
-#define LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+#define MLOGD Logger(ANDROID_LOG_DEBUG,LOG_TAG)
+#define MLOGI Logger(ANDROID_LOG_INFO,LOG_TAG)
+#define MLOGE Logger(ANDROID_LOG_ERROR,LOG_TAG)
+
+//#define LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+//#define LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+//#define LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
 static int print_chip_info(const char *path)
 {
-    struct gpiod_chip_info *info;
-    struct gpiod_chip *chip;
+    for (const auto& entry: ::std::__fs::filesystem::directory_iterator("/dev/")) {
+        if (::gpiod::is_gpiochip_device(entry.path())) {
+            ::gpiod::chip chip(entry.path());
+            auto info = chip.get_info();
 
-    chip = gpiod_chip_open(path);
-    if (!chip) {
-        LOGE("Unable to open chip '%s'", path);
-        return 1;
+            Logger(ANDROID_LOG_DEBUG, LOG_TAG) << info.name() << " [" <<
+                info.label() << "] (" <<
+                info.num_lines() << " lines)" << ::std::endl;
+
+        }
     }
-
-    info = gpiod_chip_get_info(chip);
-    if (!info)
-        LOGE("Unable to read info for '%s'", path);
-
-    LOGI("%s [%s] (%zu lines)\n",
-         gpiod_chip_info_get_name(info),
-         gpiod_chip_info_get_label(info),
-         gpiod_chip_info_get_num_lines(info));
-
-    gpiod_chip_info_free(info);
-    gpiod_chip_close(chip);
 
     return 0;
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_sym_gpiodroid_gpiod_stringFromJNI(
+Java_com_sym_gpiodroid_GPIO_stringFromJNI(
         JNIEnv* env,
         jobject /* this */) {
     std::string hello = "Hello from C++";
@@ -44,7 +42,7 @@ Java_com_sym_gpiodroid_gpiod_stringFromJNI(
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_sym_gpiodroid_gpiod_getGPIOTotalBank(JNIEnv *env, jobject thiz) {
+Java_com_sym_gpiodroid_GPIO_getGPIOTotalBank(JNIEnv *env, jobject thiz) {
     std::ignore = thiz;
     struct gpiod_chip_info *chipInfo;
     char **paths;
@@ -62,13 +60,21 @@ Java_com_sym_gpiodroid_gpiod_getGPIOTotalBank(JNIEnv *env, jobject thiz) {
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_sym_gpiodroid_gpiod_setGPIOInfo(JNIEnv *env, jobject thiz, jint bank, jint line,
-                                         jint value) {
+Java_com_sym_gpiodroid_GPIO_setGPIOInfo(JNIEnv *env, jobject thiz, jint bank, jint line,
+                                        jint value) {
     // TODO: implement setGPIOInfo()
+    return 0;
 }
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_sym_gpiodroid_gpiod_getGPIOInfo(JNIEnv *env, jobject thiz, jint bank, jint line) {
-    // TODO: implement getGPIOInfo()
+Java_com_sym_gpiodroid_GPIO_getGPIOInfo(JNIEnv *env, jobject thiz, jint bank, jint line) {
+    std::ignore = thiz;
+
+    char strbank[32] = {0}, ret[4] = {0};
+    sprintf(strbank, "gpiochip%d", bank);
+
+    LOGD("GPIO bank is %d", bank);
+    LOGD("GPIO line is %d", line);
+
 }

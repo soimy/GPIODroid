@@ -22,19 +22,23 @@ add_library( # Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         gpiodroid.cpp
-        libgpiod/lib/chip.c
-        libgpiod/lib/chip-info.c
-        libgpiod/lib/edge-event.c
-        libgpiod/lib/info-event.c
-        libgpiod/lib/internal.c
-        libgpiod/lib/line-config.c
-        libgpiod/lib/line-info.c
-        libgpiod/lib/line-request.c
-        libgpiod/lib/line-settings.c
-        libgpiod/lib/misc.c
-        libgpiod/lib/request-config.c
-        libgpiod/tools/tools-common.c
-#        tools-common.c)
+        AndroidLogger.cpp
+        libgpiod/bindings/cxx/chip.cpp
+        libgpiod/bindings/cxx/chip-info.cpp
+        libgpiod/bindings/cxx/edge-event.cpp
+        libgpiod/bindings/cxx/edge-event-buffer.cpp
+        libgpiod/bindings/cxx/exception.cpp
+        libgpiod/bindings/cxx/info-event.cpp
+        libgpiod/bindings/cxx/internal.cpp
+        libgpiod/bindings/cxx/line.cpp
+        libgpiod/bindings/cxx/line-config.cpp
+        libgpiod/bindings/cxx/line-info.cpp
+        libgpiod/bindings/cxx/line-request.cpp
+        libgpiod/bindings/cxx/line-settings.cpp
+        libgpiod/bindings/cxx/misc.cpp
+        libgpiod/bindings/cxx/request-builder.cpp
+        libgpiod/bindings/cxx/request-config.cpp
+
         )
 
 # Searches for a specified prebuilt library and stores the path as a
@@ -55,15 +59,12 @@ find_library( # Sets the name of the path variable.
 # build script, prebuilt third-party libraries, or system libraries.
 
 include_directories(${ANDROID_ABI}/)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libgpiod/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libgpiod/tools)
-
-#add_library(gpiod STATIC IMPORTED)
-#set_target_properties(gpiod PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/libgpiod.a)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libgpiod/bindings/cxx/)
+#include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libgpiod/tools)
 
 target_link_libraries( # Specifies the target library.
         gpiodroid
-#        gpiod
 
         # Links the target library to the log library
         # included in the NDK.
