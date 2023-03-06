@@ -10,7 +10,7 @@ class GPIO {
      * which is packaged with this application.
      */
     external fun stringFromJNI(): String
-    external fun getGPIOTotalBank(): Int
+    external fun getGPIOTotalBank(chipNames: Array<String>): Int
     external fun setGPIOInfo(bank: Int, line: Int, value: Int): Int
     external fun getGPIOInfo(bank: Int, line: Int): Int
 
@@ -24,10 +24,12 @@ class GPIO {
         init {
             System.loadLibrary("gpiodroid")
         }
+
+        private lateinit var _chipNames: Array<String>
     }
 
     fun gpioGetTotalBank(): Int {
-        return getGPIOTotalBank()
+        return getGPIOTotalBank(_chipNames)
     }
 
 }

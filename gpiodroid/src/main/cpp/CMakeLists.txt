@@ -22,7 +22,6 @@ add_library( # Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         gpiodroid.cpp
-        AndroidLogger.cpp
         libgpiod/bindings/cxx/chip.cpp
         libgpiod/bindings/cxx/chip-info.cpp
         libgpiod/bindings/cxx/edge-event.cpp

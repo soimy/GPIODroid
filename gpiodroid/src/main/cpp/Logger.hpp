@@ -1,6 +1,7 @@
+// Android style Logcat with cpp stream support
+// Shen Yiming <soimy@163.com> 2023-03-06
 //
-// Created by soimy on 2023/3/3.
-//
+// Based on: https://stackoverflow.com/questions/8870174/is-stdcout-usable-in-android-ndk?answertab=modifieddesc#tab-top
 
 #ifndef GPIODROID_LOGGER_HPP
 #define GPIODROID_LOGGER_HPP
@@ -13,10 +14,15 @@ class Logger {
 
 public:
     Logger(const android_LogPriority priority,const std::string& TAG):M_PRIORITY(priority),M_TAG(TAG) {}
-    Logger(const Logger& ) = delete;
+//    Logger(const Logger& ) = delete;
 
     ~Logger() {
         logBigMessage(stream.str());
+    }
+
+    template <typename T> Logger& operator<<(T const& val) {
+        stream << val;
+        return *this;
     }
 
 private:
@@ -30,7 +36,7 @@ private:
     //Splits debug messages that exceed the android log maximum length into smaller log(s)
     //Recursive declaration
     void logBigMessage(const std::string& message) {
-        if(message.length()>ANDROID_LOG_BUFF_SIZE) {
+        if(message.length() > ANDROID_LOG_BUFF_SIZE) {
             __android_log_print(M_PRIORITY,M_TAG.c_str(),"%s",message.substr(0,ANDROID_LOG_BUFF_SIZE).c_str());
             logBigMessage(message.substr(ANDROID_LOG_BUFF_SIZE));
         } else {
@@ -38,31 +44,7 @@ private:
         }
     }
 
-    // the non-member function operator<< will now have access to private members
-    template <typename T>
-
-    friend Logger& operator<<(Logger& record, T&& t);
 };
 
-template <typename T>
-
-Logger& operator<<(Logger& record, T&& t) {
-    record.stream << std::forward<T>(t);
-    return record;
-}
-
-template <typename T>
-Logger& operator<<(Logger&& record, T&& t) {
-    return record << std::forward<T>(t);
-}
-
-// These are usefully so we don't have to write AndroidLogger(ANDROID_LOG_DEBUG,"MyTAG") every time
-static Logger LOGD(const std::string& TAG="NoTag"){
-    return Logger(ANDROID_LOG_DEBUG,TAG);
-}
-
-static Logger LOGE(const std::string& TAG="NoTag"){
-    return Logger(ANDROID_LOG_ERROR,TAG);
-}
 
 #endif //GPIODROID_LOGGER_HPP
