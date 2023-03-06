@@ -13,7 +13,8 @@ project("gpiodroid")
 # or SHARED, and provides the relative paths to its source code.
 # You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
-
+aux_source_directory(libgpiod/lib/ GPIOD_C_SRC)
+aux_source_directory(libgpiod/bindings/cxx/ GPIOD_CPP_SRC)
 add_library( # Sets the name of the library.
         gpiodroid
 
@@ -22,22 +23,8 @@ add_library( # Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         gpiodroid.cpp
-        libgpiod/bindings/cxx/chip.cpp
-        libgpiod/bindings/cxx/chip-info.cpp
-        libgpiod/bindings/cxx/edge-event.cpp
-        libgpiod/bindings/cxx/edge-event-buffer.cpp
-        libgpiod/bindings/cxx/exception.cpp
-        libgpiod/bindings/cxx/info-event.cpp
-        libgpiod/bindings/cxx/internal.cpp
-        libgpiod/bindings/cxx/line.cpp
-        libgpiod/bindings/cxx/line-config.cpp
-        libgpiod/bindings/cxx/line-info.cpp
-        libgpiod/bindings/cxx/line-request.cpp
-        libgpiod/bindings/cxx/line-settings.cpp
-        libgpiod/bindings/cxx/misc.cpp
-        libgpiod/bindings/cxx/request-builder.cpp
-        libgpiod/bindings/cxx/request-config.cpp
-
+        ${GPIOD_C_SRC}
+        ${GPIOD_CPP_SRC}
         )
 
 # Searches for a specified prebuilt library and stores the path as a
@@ -52,6 +39,7 @@ find_library( # Sets the name of the path variable.
         # Specifies the name of the NDK library that
         # you want CMake to locate.
         log)
+#find_library(cxxfs-lib c++fs)
 
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
@@ -59,6 +47,7 @@ find_library( # Sets the name of the path variable.
 
 include_directories(${ANDROID_ABI}/)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libgpiod/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libgpiod/bindings/cxx/)
 #include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libgpiod/tools)
 
