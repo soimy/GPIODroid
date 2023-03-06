@@ -10,9 +10,9 @@ class GPIO {
      * which is packaged with this application.
      */
     external fun stringFromJNI(): String
-    external fun getGPIOTotalBank(chipNames: Array<String>): Int
+    external fun getGPIOAllChips(chipNames: Array<String>): Int
     external fun setGPIOInfo(bank: Int, line: Int, value: Int): Int
-    external fun getGPIOInfo(bank: Int, line: Int): Int
+    external fun getGPIOInfo(chipPath: String, line: Int): Int
 
     companion object {
         private lateinit var UnityActivityRef: WeakReference<Activity>
@@ -29,7 +29,7 @@ class GPIO {
     }
 
     fun gpioGetTotalBank(): Int {
-        return getGPIOTotalBank(_chipNames)
+        return getGPIOAllChips(_chipNames)
     }
 
 }

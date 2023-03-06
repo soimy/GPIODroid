@@ -22,16 +22,15 @@ Java_com_sym_gpiodroid_GPIO_stringFromJNI(
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_sym_gpiodroid_GPIO_getGPIOTotalBank(JNIEnv *env, jobject thiz, jobjectArray chip_names) {
-    std::ignore = thiz;
+Java_com_sym_gpiodroid_GPIO_getGPIOAllChips(JNIEnv *env, jobject /* thiz */, jobjectArray chip_names) {
     int totalBank = 0;
     std::vector<std::string> chipPaths;
-    for (const auto& entry: ::std::__fs::filesystem::directory_iterator("/dev/")) {
+    for (const auto& entry: ::std::filesystem::directory_iterator("/dev/")) {
         if (::gpiod::is_gpiochip_device(entry.path())) {
             ::gpiod::chip chip(entry.path());
             auto info = chip.get_info();
 
-            chipPaths.push_back(entry.path().string());
+            chipPaths.push_back(info.name());
             totalBank ++;
             MLOGD << info.name() << " [" <<
                   info.label() << "] (" <<
@@ -49,23 +48,28 @@ Java_com_sym_gpiodroid_GPIO_getGPIOTotalBank(JNIEnv *env, jobject thiz, jobjectA
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_sym_gpiodroid_GPIO_setGPIOInfo(JNIEnv *env, jobject thiz, jint bank, jint line, jint value) {
+Java_com_sym_gpiodroid_GPIO_setGPIOInfo(JNIEnv *env, jobject /* thiz */, jint bank, jint line, jint value) {
     // TODO: implement setGPIOInfo()
     return 0;
 }
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_sym_gpiodroid_GPIO_getGPIOInfo(JNIEnv *env, jobject thiz, jint bank, jint line) {
-    // TODO: implement setGPIOInfo()
-    std::ignore = thiz;
+Java_com_sym_gpiodroid_GPIO_getGPIOInfo(JNIEnv *env, jobject /* thiz */, jstring chipPath, jint line) {
+    const char* chip_name = env->GetStringUTFChars(chipPath, nullptr);
+    gpiod::line::offset offset = line;
+    gpiod::chip chip(chip_name);
 
 //    char strbank[32] = {0}, ret[4] = {0};
 //    sprintf(strbank, "gpiochip%d", bank);
 
-    MLOGD
-        << "GPIO bank is " << bank << "\n"
-        << "GPIO line is " << line;
+    MLOGD << "GPIO line is " << chip_name << " - " << offset;
 
+    auto request = chip.prepare_request()
+            .set_consumer("gpioDroid")
+            .add_line_settings(offset, gpiod::line_settings().set_direction(gpiod::line::direction::INPUT))
+            .do_request();
+    auto val = request.get_value(offset);
 
+    return val == gpiod::line::value::ACTIVE ? 1 : 0;
 }
