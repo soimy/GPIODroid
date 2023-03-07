@@ -11,18 +11,9 @@
 //#define MLOGI Logger(ANDROID_LOG_INFO,LOG_TAG)
 //#define MLOGE Logger(ANDROID_LOG_ERROR,LOG_TAG)
 
-
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_sym_gpiodroid_GPIO_stringFromJNI(
-        JNIEnv* env,
-        jobject /* this */) {
-    std::string hello = "Hello from C++";
-    return env->NewStringUTF(hello.c_str());
-}
-
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_sym_gpiodroid_GPIO_getGPIOAllChips(JNIEnv *env, jobject /* thiz */, jobjectArray chip_names) {
+Java_com_sym_gpiodroid_GPIO_getAllChipsNative(JNIEnv *env, jobject /* thiz */, jobjectArray chip_names) {
     int totalBank = 0;
     std::vector<std::string> chipPaths;
     for (const auto& entry: ::std::filesystem::directory_iterator("/dev/")) {
@@ -38,7 +29,7 @@ Java_com_sym_gpiodroid_GPIO_getGPIOAllChips(JNIEnv *env, jobject /* thiz */, job
 
         }
     }
-    chip_names = env->NewObjectArray(totalBank, env->FindClass("java/lang/String"), NULL);
+    chip_names = env->NewObjectArray(totalBank, env->FindClass("java/lang/String"), nullptr);
     for (jsize i = 0; i < chipPaths.size(); i++) {
         env->SetObjectArrayElement(chip_names, i, env->NewStringUTF(chipPaths[i].c_str()));
     }
@@ -48,14 +39,15 @@ Java_com_sym_gpiodroid_GPIO_getGPIOAllChips(JNIEnv *env, jobject /* thiz */, job
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_sym_gpiodroid_GPIO_setGPIOInfo(JNIEnv *env, jobject /* thiz */, jint bank, jint line, jint value) {
-    // TODO: implement setGPIOInfo()
-    return 0;
+Java_com_sym_gpiodroid_GPIO_setLinesNative(JNIEnv *env, jobject thiz, jobjectArray chip_ids,
+                                           jint line, jint value) {
+    // TODO: implement setLinesNative()
+    
 }
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_sym_gpiodroid_GPIO_getGPIOInfo(JNIEnv *env, jobject /* thiz */, jstring chipPath, jint line) {
+Java_com_sym_gpiodroid_GPIO_getLinesNative(JNIEnv *env, jobject /* thiz */, jstring chipPath, jint line) {
     const char* chip_name = env->GetStringUTFChars(chipPath, nullptr);
     gpiod::line::offset offset = line;
     gpiod::chip chip(chip_name);

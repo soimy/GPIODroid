@@ -9,10 +9,9 @@ class GPIO {
      * A native method that is implemented by the 'gpiodroid' native library,
      * which is packaged with this application.
      */
-    external fun stringFromJNI(): String
-    external fun getGPIOAllChips(chipNames: Array<String>): Int
-    external fun setGPIOInfo(bank: Int, line: Int, value: Int): Int
-    external fun getGPIOInfo(chipPath: String, line: Int): Int
+    private external fun getAllChipsNative(chipNames: Array<String>): Int
+    external fun setLinesNative(chipIds: Array<Int>, line: Int, value: Int): Int
+    external fun getLinesNative(chipPath: String, line: Int): Int
 
     companion object {
         private lateinit var UnityActivityRef: WeakReference<Activity>
@@ -29,7 +28,7 @@ class GPIO {
     }
 
     fun gpioGetTotalBank(): Int {
-        return getGPIOAllChips(_chipNames)
+        return getAllChipsNative(_chipNames)
     }
 
 }
