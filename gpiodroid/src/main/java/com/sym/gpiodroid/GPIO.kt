@@ -10,8 +10,8 @@ class GPIO {
      * which is packaged with this application.
      */
     private external fun getAllChipsNative(chipNames: Array<String>): Int
-    external fun setLinesNative(chipIds: Array<Int>, line: Int, value: Int): Int
-    external fun getLinesNative(chipPath: String, line: Int): Int
+    external fun setLinesNative(chipName: String, lines: IntArray, values: IntArray): Int
+    external fun getLinesNative(chipName: String, lines: IntArray): IntArray
 
     companion object {
         private lateinit var UnityActivityRef: WeakReference<Activity>

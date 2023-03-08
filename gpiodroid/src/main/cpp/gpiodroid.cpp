@@ -11,6 +11,17 @@
 //#define MLOGI Logger(ANDROID_LOG_INFO,LOG_TAG)
 //#define MLOGE Logger(ANDROID_LOG_ERROR,LOG_TAG)
 
+gpiod::line::offsets lines2Offsets(JNIEnv *env, jintArray lines) {
+    gpiod::line::offsets offsets;
+    jsize size = env->GetArrayLength(lines);
+    jint* linePtr = env->GetIntArrayElements(lines, nullptr);
+    for (jsize i = 0; i < size; i++) {
+        offsets.push_back((unsigned int)linePtr[i]);
+    }
+    env->ReleaseIntArrayElements(lines, linePtr, 0);
+    return offsets;
+}
+
 extern "C"
 JNIEXPORT jint JNICALL
 Java_com_sym_gpiodroid_GPIO_getAllChipsNative(JNIEnv *env, jobject /* thiz */, jobjectArray chip_names) {
@@ -39,29 +50,66 @@ Java_com_sym_gpiodroid_GPIO_getAllChipsNative(JNIEnv *env, jobject /* thiz */, j
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_sym_gpiodroid_GPIO_setLinesNative(JNIEnv *env, jobject thiz, jobjectArray chip_ids,
-                                           jint line, jint value) {
-    // TODO: implement setLinesNative()
-    
+Java_com_sym_gpiodroid_GPIO_setLinesNative(
+        JNIEnv *env,
+        jobject thiz,
+        jstring chipName,
+        jintArray lines,
+        jintArray values) {
+
+    const char* chip_name = env->GetStringUTFChars(chipName, nullptr);
+    gpiod::chip chip(chip_name);
+    gpiod::line::offsets offsets = lines2Offsets(env, lines);
+    gpiod::line::values vals;
+
+    jsize n = env->GetArrayLength(values);
+    jint* vPtr = env->GetIntArrayElements(values, nullptr);
+    for (jsize i = 0; i < n; i++) {
+        vals.push_back(vPtr[i] ? gpiod::line::value::ACTIVE : gpiod::line::value::INACTIVE);
+    }
+
+    auto request = chip.prepare_request()
+            .set_consumer("GPIODroid")
+            .add_line_settings(
+                    offsets,
+                    gpiod::line_settings()
+                        .set_direction(gpiod::line::direction::OUTPUT)
+            ).do_request();
+
+    request.set_values(vals);
+
+    return 0;
 }
 
 extern "C"
-JNIEXPORT jint JNICALL
-Java_com_sym_gpiodroid_GPIO_getLinesNative(JNIEnv *env, jobject /* thiz */, jstring chipPath, jint line) {
-    const char* chip_name = env->GetStringUTFChars(chipPath, nullptr);
-    gpiod::line::offset offset = line;
+JNIEXPORT jintArray JNICALL
+Java_com_sym_gpiodroid_GPIO_getLinesNative(
+        JNIEnv *env,
+        jobject thiz,
+        jstring chipName,
+        jintArray lines) {
+
+//    jclass gpioClass = env->GetObjectClass(thiz);
+    const char* chip_name = env->GetStringUTFChars(chipName, nullptr);
     gpiod::chip chip(chip_name);
+    gpiod::line::offsets offsets = lines2Offsets(env, lines);
 
-//    char strbank[32] = {0}, ret[4] = {0};
-//    sprintf(strbank, "gpiochip%d", bank);
-
-    MLOGD << "GPIO line is " << chip_name << " - " << offset;
+    MLOGD << "GPIO line is " << chip_name << " - " << offsets;
 
     auto request = chip.prepare_request()
             .set_consumer("gpioDroid")
-            .add_line_settings(offset, gpiod::line_settings().set_direction(gpiod::line::direction::INPUT))
+            .add_line_settings(offsets,
+                               gpiod::line_settings()
+                                    .set_direction(gpiod::line::direction::INPUT))
             .do_request();
-    auto val = request.get_value(offset);
 
-    return val == gpiod::line::value::ACTIVE ? 1 : 0;
+    auto vals = request.get_values();
+    jintArray ret = env->NewIntArray((jsize)vals.size());
+    jint* retPtr = env->GetIntArrayElements(ret, nullptr);
+    for (jsize i = 0; i < (jsize)vals.size(); i++) {
+        retPtr[i] = vals[i] == gpiod::line::value::ACTIVE ? 1 : 0;
+    }
+
+    return ret;
 }
+
