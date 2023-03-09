@@ -12,6 +12,7 @@ class GPIO {
     private external fun getAllChipsNative(chipNames: Array<String>): Int
     external fun setLinesNative(chipName: String, lines: IntArray, values: IntArray): Int
     external fun getLinesNative(chipName: String, lines: IntArray): IntArray
+    external fun edgeDetectsNative(chipName: String, lines: IntArray): Int
 
     companion object {
         private lateinit var UnityActivityRef: WeakReference<Activity>
@@ -19,9 +20,13 @@ class GPIO {
         fun recieveUnityActivity(tActivity: Activity) {
             UnityActivityRef = WeakReference<Activity>(tActivity)
         }
+
+        private external fun nativeInit()
+
         // Used to load the 'gpiodroid' library on application startup.
         init {
             System.loadLibrary("gpiodroid")
+            nativeInit()
         }
 
         private lateinit var _chipNames: Array<String>

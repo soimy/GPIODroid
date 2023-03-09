@@ -10,6 +10,7 @@
 #define MLOGD Logger(ANDROID_LOG_DEBUG,LOG_TAG)
 //#define MLOGI Logger(ANDROID_LOG_INFO,LOG_TAG)
 //#define MLOGE Logger(ANDROID_LOG_ERROR,LOG_TAG)
+#define	P_THREAD(X)	void *X (UNU void *dummy)
 
 gpiod::line::offsets lines2Offsets(JNIEnv *env, jintArray lines) {
     gpiod::line::offsets offsets;
@@ -20,6 +21,23 @@ gpiod::line::offsets lines2Offsets(JNIEnv *env, jintArray lines) {
     }
     env->ReleaseIntArrayElements(lines, linePtr, 0);
     return offsets;
+}
+
+void printEvent(const gpiod::edge_event& event) {
+    std::string edge;
+    if (event.type() == gpiod::edge_event::event_type::RISING_EDGE)
+        edge = "RISING EDGE";
+    else
+        edge = "FALLING EDGE";
+
+    MLOGD   << edge << " " << event.timestamp_ns() / 1000000000 << "." << event.timestamp_ns() % 1000000000
+            << " line: " << event.line_offset();
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_sym_gpiodroid_GPIO_00024Companion_nativeInit(JNIEnv *env, jobject thiz) {
+    // TODO: implement nativeInit()
 }
 
 extern "C"
@@ -111,5 +129,39 @@ Java_com_sym_gpiodroid_GPIO_getLinesNative(
     }
 
     return ret;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_sym_gpiodroid_GPIO_edgeDetectsNative(
+        JNIEnv *env,
+        jobject thiz,
+        jstring chipName,
+        jintArray lines) {
+
+    const char* chip_name = env->GetStringUTFChars(chipName, nullptr);
+    gpiod::chip chip(chip_name);
+    gpiod::line::offsets offsets = lines2Offsets(env, lines);
+
+
+    auto request = chip.prepare_request()
+            .set_consumer("gpioDroid")
+            .add_line_settings(
+                    offsets,
+                    gpiod::line_settings()
+                        .set_direction(gpiod::line::direction::INPUT)
+                        .set_edge_detection(gpiod::line::edge::BOTH)
+            )
+            .do_request();
+
+    gpiod::edge_event_buffer buffer;
+
+    // TODO: use thread to achieve none blocking polling
+    for (;;) {
+        request.read_edge_events(buffer);
+
+        for (const auto& event: buffer)
+            printEvent(event);
+    }
 }
 
