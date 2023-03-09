@@ -10,7 +10,7 @@
 #define MLOGD Logger(ANDROID_LOG_DEBUG,LOG_TAG)
 //#define MLOGI Logger(ANDROID_LOG_INFO,LOG_TAG)
 //#define MLOGE Logger(ANDROID_LOG_ERROR,LOG_TAG)
-#define	P_THREAD(X)	void *X (UNU void *dummy)
+//#define	P_THREAD(X)	void *X (UNU void *dummy)
 
 gpiod::line::offsets lines2Offsets(JNIEnv *env, jintArray lines) {
     gpiod::line::offsets offsets;
@@ -41,8 +41,8 @@ Java_com_sym_gpiodroid_GPIO_00024Companion_nativeInit(JNIEnv *env, jobject thiz)
 }
 
 extern "C"
-JNIEXPORT jint JNICALL
-Java_com_sym_gpiodroid_GPIO_getAllChipsNative(JNIEnv *env, jobject /* thiz */, jobjectArray chip_names) {
+JNIEXPORT jobjectArray JNICALL
+Java_com_sym_gpiodroid_GPIO_getAllChipsNative(JNIEnv *env, jobject /* thiz */) {
     int totalBank = 0;
     std::vector<std::string> chipPaths;
     for (const auto& entry: ::std::filesystem::directory_iterator("/dev/")) {
@@ -58,12 +58,12 @@ Java_com_sym_gpiodroid_GPIO_getAllChipsNative(JNIEnv *env, jobject /* thiz */, j
 
         }
     }
-    chip_names = env->NewObjectArray(totalBank, env->FindClass("java/lang/String"), nullptr);
+    auto chip_paths= env->NewObjectArray(totalBank, env->FindClass("java/lang/String"), nullptr);
     for (jsize i = 0; i < chipPaths.size(); i++) {
-        env->SetObjectArrayElement(chip_names, i, env->NewStringUTF(chipPaths[i].c_str()));
+        env->SetObjectArrayElement(chip_paths, i, env->NewStringUTF(chipPaths[i].c_str()));
     }
 
-    return totalBank;
+    return chip_paths;
 }
 
 extern "C"
@@ -116,9 +116,11 @@ Java_com_sym_gpiodroid_GPIO_getLinesNative(
 
     auto request = chip.prepare_request()
             .set_consumer("gpioDroid")
-            .add_line_settings(offsets,
-                               gpiod::line_settings()
-                                    .set_direction(gpiod::line::direction::INPUT))
+            .add_line_settings(
+                    offsets,
+                    gpiod::line_settings()
+                    .set_direction(gpiod::line::direction::INPUT)
+            )
             .do_request();
 
     auto vals = request.get_values();
@@ -142,7 +144,6 @@ Java_com_sym_gpiodroid_GPIO_edgeDetectsNative(
     const char* chip_name = env->GetStringUTFChars(chipName, nullptr);
     gpiod::chip chip(chip_name);
     gpiod::line::offsets offsets = lines2Offsets(env, lines);
-
 
     auto request = chip.prepare_request()
             .set_consumer("gpioDroid")
